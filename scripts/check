@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+
+import sys
+import json
+import time
+from imapclient import IMAPClient
+from email import policy
+from email.parser import BytesParser
+
+def check_new_mail(user, password, server, folder):
+    with IMAPClient(host=server, use_uid=True, ssl=True) as client:
+        client.login(user, password)
+        client.select_folder(folder)
+
+        # Search for unseen mails
+        messages = client.search('UNSEEN')
+
+        new_emails = []
+        for msg_id in messages:
+            data = client.fetch([msg_id], 'BODY[]')
+            msg = data[msg_id][b'BODY[]']
+
+            email_message = BytesParser(policy=policy.default).parsebytes(msg)
+            date = email_message['Date'].datetime  # Use the datetime attribute
+            timestamp = time.mktime(date.timetuple())
+
+            new_emails.append({"id": str(msg_id), "timestamp": str(timestamp)})
+
+        return new_emails
+
+
+if __name__ == "__main__":
+    # The check script is passed a JSON object via stdin
+    input_json = json.load(sys.stdin)
+
+    # Retrieve server connection info from the 'source' field in the JSON
+    user = input_json["source"]["user"]
+    password = input_json["source"]["password"]
+    server = input_json["source"]["server"]
+    folder = input_json["source"]["folder"]
+
+    # Retrieve the version from the 'version' field in the JSON
+    previous_version = input_json.get("version", {"id": "0"})
+
+    emails = check_new_mail(user, password, server, folder)
+
+    new_emails = [email for email in emails if int(email["id"]) > int(previous_version.get("id", "0"))]
+
+    print(json.dumps(new_emails))

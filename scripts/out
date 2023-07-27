@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+
+import json
+
+version = {
+    "version": {
+        "id": "dummy",
+        "timestamp": "0"
+    }
+}
+
+print(json.dumps(version))

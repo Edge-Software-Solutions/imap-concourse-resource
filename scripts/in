@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import json
+import time
+from imapclient import IMAPClient
+from email import policy
+from email.parser import BytesParser
+
+def fetch_mail(user, password, server, folder, msg_id):
+    with IMAPClient(host=server, use_uid=True, ssl=True) as client:
+        client.login(user, password)
+        client.select_folder(folder)
+
+        # Fetch the specific mail
+        data = client.fetch([msg_id], 'BODY[]')
+        msg = data[msg_id][b'BODY[]']
+
+        email_message = BytesParser(policy=policy.default).parsebytes(msg)
+
+        return email_message
+
+def write_to_file(email_message, destination):
+    with open(os.path.join(destination, "email.txt"), "w") as f:
+        f.write(str(email_message))
+
+if __name__ == "__main__":
+    # The destination directory is passed as the first argument
+    destination = sys.argv[1]
+
+    # The in script is passed a JSON object via stdin
+    input_json = json.load(sys.stdin)
+
+    # Retrieve server connection info from the 'source' field in the JSON
+    user = input_json["source"]["user"]
+    password = input_json["source"]["password"]
+    server = input_json["source"]["server"]
+    folder = input_json["source"]["folder"]
+
+    # Retrieve the version from the 'version' field in the JSON
+    msg_id = int(input_json["version"]["id"])
+
+    email_message = fetch_mail(user, password, server, folder, msg_id)
+
+    write_to_file(email_message, destination)
+
+    # Output the version
+    print(json.dumps({"version": {"id": str(msg_id)}}))

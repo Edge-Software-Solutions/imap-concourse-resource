@@ -1,0 +1,11 @@
+{
+  "source": {
+    "user": "username",
+    "password": "password",
+    "server": "imap.broadband.rogers.com",
+    "folder": "logstash_input"
+  },
+  "version": {
+    "id": "267"
+  }
+}

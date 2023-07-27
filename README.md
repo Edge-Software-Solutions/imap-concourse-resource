@@ -1,69 +1,69 @@
-# IMAP MUTT Resource
+# IMAP Concourse Resource
 
-A resource that reports new emails from an IMAP server using mutt
+A Concourse resource that checks for new emails from an IMAP server and outputs their contents to a file.
 
 ## Source Configuration
 
 ```yaml
 resource_types:
-- name: imap-mutt
+- name: email
   type: docker-image
   source:
-    repository: edgesoftwaresolutions/imap-mutt-resource
+    repository: your-docker-hub-username/imap-concourse-resource
 
 resources:
-- name: my-email-checker
-  type: imap-mutt
+- name: my-email
+  type: email
   source:
-    uri: https://my.gitea.host/myname/myproject.git
-    private_token: XXX
+    server: imap.mail.yahoo.com
+    user: ((email-user))
+    password: ((email-password))
+    folder: INBOX
+
 ```
 
-* `uri`: The location of the repository (required)
-* `private_token`: Your Gitea user's private token (required, can be found in your profile settings)
-* `no_ssl`: Set to `true` if the Gitea API should be used over HTTP instead of HTTPS
-
-> Please note that you have to provide either `private_key` or `username` and `password`.
+* `server`: The address of the IMAP server (required)
+* `user`: The username to log in to the server (required)
+* `password`: The password to log in to the server (required)
+* `folder`: The folder to check for new emails (required)
 
 ## Behavior
 
 ### `check` for new emails from the IMAP server
 
-Updates the pull request's `status` which displays nicely in the Gitea UI and allows to only pull changes if they pass the test.
+The `check` script connects to the IMAP server, checks the specified folder for new (unread) emails, and returns a list of new email IDs and their timestamps. Each new email is represented by a version.
 
-### `out` and `in` is not implemented
+### `in`: Fetch an email from the IMAP server
+
+The `in` script takes a version produced by the check script, connects to the IMAP server, fetches the email corresponding to the version, and writes the contents of the email to a file named `email.txt`. It then returns the ID of the fetched email.
 
 
 #### Parameters
 
-* `repository`: The path of the repository of the pull request's source branch (required)
-* `status`: The new status of the pull request (required, can be either `pending`, `pending`, `error`, `failure`, or `warning`)
-* `build_label`: The label of the build in Gitea (optional, defaults to `"Concourse"`)
-* `description`: The description to pass to Gitea (optional)
+None
 
 ## Example
 
 ```yaml
 jobs:
-- name: test-pull-request
+- name: do-something-with-email
   plan:
-  - get: repo
-    resource: repo-mr
+  - get: my-email
     trigger: true
-  - put: repo-mr
-    params:
-      repository: repo
-      status: running
-  - task: run-tests
-    file: repo/ci/tasks/run-tests.yml
-  on_failure:
-    put: repo-mr
-    params:
-      repository: repo
-      status: failed
-  on_success:
-    put: repo-mr
-    params:
-      repository: repo
-      status: success
+  - task: do-something
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: {repository: alpine}
+      run:
+        path: /bin/sh
+        args:
+        - -c
+        - |
+          echo "New email received!"
+          cat my-email/email.txt
+    inputs:
+    - name: my-email
+
 ```
