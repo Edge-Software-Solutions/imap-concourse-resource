@@ -7,13 +7,14 @@ from imapclient import IMAPClient
 from email import policy
 from email.parser import BytesParser
 
-def check_new_mail(user, password, server, folder):
+def check_new_mail(user, password, server, folder, unread_only):
     with IMAPClient(host=server, use_uid=True, ssl=True) as client:
         client.login(user, password)
         client.select_folder(folder)
 
-        # Search for unseen mails
-        messages = client.search('UNSEEN')
+        # Search for mails based on the provided parameter
+        search_criterion = 'UNSEEN' if unread_only else 'ALL'
+        messages = client.search(search_criterion)
 
         new_emails = []
         for msg_id in messages:
@@ -28,7 +29,6 @@ def check_new_mail(user, password, server, folder):
 
         return new_emails
 
-
 if __name__ == "__main__":
     # The check script is passed a JSON object via stdin
     input_json = json.load(sys.stdin)
@@ -39,10 +39,13 @@ if __name__ == "__main__":
     server = input_json["source"]["server"]
     folder = input_json["source"]["folder"]
 
+    # Retrieve the return_unread_only from the 'source' field in the JSON, defaulting to True if it's not provided
+    unread_only = input_json["source"].get("check_return_unread_only", True)
+
     # Retrieve the version from the 'version' field in the JSON
     previous_version = input_json.get("version", {"id": "0"})
 
-    emails = check_new_mail(user, password, server, folder)
+    emails = check_new_mail(user, password, server, folder, unread_only)
 
     new_emails = [email for email in emails if int(email["id"]) > int(previous_version.get("id", "0"))]
 

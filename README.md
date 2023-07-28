@@ -28,6 +28,7 @@ resources:
 * `password`: The password to log in to the server (required)
 * `folder`: The folder to check for new emails (required)
 * `email_body_only`: Set to `true` to only output the body of the email instead of the entire MIME email (optional, defaults to `false`)
+* `check_return_unread_only`: Set to `true` to only return unread in the versions (optional, defaults to `false`)
 
 ## Behavior
 
