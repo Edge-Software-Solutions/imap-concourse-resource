@@ -7,6 +7,7 @@ import time
 from imapclient import IMAPClient
 from email import policy
 from email.parser import BytesParser
+from email.message import Message
 
 def fetch_mail(user, password, server, folder, msg_id):
     with IMAPClient(host=server, use_uid=True, ssl=True) as client:
@@ -21,9 +22,21 @@ def fetch_mail(user, password, server, folder, msg_id):
 
         return email_message
 
-def write_to_file(email_message, destination):
+def get_body(msg):
+    if isinstance(msg, Message):
+        if msg.is_multipart():
+            return get_body(msg.get_payload(0))
+        else:
+            return msg.get_payload()
+    else:
+        return ""
+
+def write_to_file(email_message, destination, email_body_only):
     with open(os.path.join(destination, "email.txt"), "w") as f:
-        f.write(str(email_message))
+        if email_body_only:
+            f.write(get_body(email_message))
+        else:
+            f.write(str(email_message))
 
 if __name__ == "__main__":
     # The destination directory is passed as the first argument
@@ -41,9 +54,12 @@ if __name__ == "__main__":
     # Retrieve the version from the 'version' field in the JSON
     msg_id = int(input_json["version"]["id"])
 
+    # Check if email_body_only parameter exists, default to False if not
+    email_body_only = input_json["source"].get("email_body_only", False)
+
     email_message = fetch_mail(user, password, server, folder, msg_id)
 
-    write_to_file(email_message, destination)
+    write_to_file(email_message, destination, email_body_only)
 
     # Output the version
     print(json.dumps({"version": {"id": str(msg_id)}}))

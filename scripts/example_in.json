@@ -3,7 +3,8 @@
     "user": "user",
     "password": "password",
     "server": "imap.broadband.rogers.com",
-    "folder": "logstash_input"
+    "folder": "logstash_input",
+    "email_body_only": true
   },
   "version": {
     "id": "267"
