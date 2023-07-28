@@ -1,7 +1,7 @@
 FROM python:alpine3.18
 
 # Install required libraries
-RUN pip install imapclient
+RUN pip install imapclient==2.3.1
 
 # Copy python script into the container
 COPY scripts /opt/resource
