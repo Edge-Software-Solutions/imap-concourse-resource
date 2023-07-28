@@ -29,6 +29,7 @@ resources:
 * `folder`: The folder to check for new emails (required)
 * `email_body_only`: Set to `true` to only output the body of the email instead of the entire MIME email (optional, defaults to `false`)
 * `check_return_unread_only`: Set to `true` to only return unread in the versions (optional, defaults to `false`)
+* `email_limit`: The maximum number of emails to return in the versions (optional, defaults to `5`)
 
 ## Behavior
 

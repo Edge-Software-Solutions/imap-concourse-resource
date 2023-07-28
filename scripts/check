@@ -7,14 +7,17 @@ from imapclient import IMAPClient
 from email import policy
 from email.parser import BytesParser
 
-def check_new_mail(user, password, server, folder, unread_only):
+def check_new_mail(user, password, server, folder, check_return_unread_only, email_limit):
     with IMAPClient(host=server, use_uid=True, ssl=True) as client:
         client.login(user, password)
         client.select_folder(folder)
 
-        # Search for mails based on the provided parameter
-        search_criterion = 'UNSEEN' if unread_only else 'ALL'
+        # Search for unseen mails
+        search_criterion = 'UNSEEN' if check_return_unread_only else 'ALL'
         messages = client.search(search_criterion)
+
+        # Apply the limit on the number of emails
+        messages = messages[-email_limit:]
 
         new_emails = []
         for msg_id in messages:
@@ -39,13 +42,16 @@ if __name__ == "__main__":
     server = input_json["source"]["server"]
     folder = input_json["source"]["folder"]
 
-    # Retrieve the return_unread_only from the 'source' field in the JSON, defaulting to True if it's not provided
-    unread_only = input_json["source"].get("check_return_unread_only", True)
+    # Check if only unread emails should be returned, default to True
+    check_return_unread_only = input_json["source"].get("check_return_unread_only", True)
+
+    # Limit the number of emails returned, default to 5
+    email_limit = input_json["source"].get("email_limit", 5)
 
     # Retrieve the version from the 'version' field in the JSON
     previous_version = input_json.get("version", {"id": "0"})
 
-    emails = check_new_mail(user, password, server, folder, unread_only)
+    emails = check_new_mail(user, password, server, folder, check_return_unread_only, email_limit)
 
     new_emails = [email for email in emails if int(email["id"]) > int(previous_version.get("id", "0"))]
 
