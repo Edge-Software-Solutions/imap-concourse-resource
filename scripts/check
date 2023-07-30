@@ -37,10 +37,14 @@ def check_new_mail(user, password, server, folder, check_return_unread_only, ema
                     subject = ''.join([text.decode(encoding or 'utf8') if isinstance(text, bytes) else text for text, encoding in decoded_header])
                     if not fnmatch.fnmatch(subject, subject_glob):
                         continue
+            else:
+                decoded_header = decode_header(email_message['Subject'])
+                subject = ''.join([text.decode(encoding or 'utf8') if isinstance(text, bytes) else text for text, encoding in decoded_header])
 
-            new_emails.append({"id": str(msg_id), "timestamp": str(timestamp)})
+            new_emails.append({"id": str(msg_id), "timestamp": str(timestamp), "subject": subject})
 
         return new_emails
+
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 # IMAP Concourse Resource
+![Docker Pulls](https://img.shields.io/docker/pulls/edgesoftwaresolution/imap-concourse-resource)
 
 A Concourse resource that checks for new emails from an IMAP server and outputs their contents to a file.
 
