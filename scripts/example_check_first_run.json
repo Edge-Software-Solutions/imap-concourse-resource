@@ -3,6 +3,8 @@
     "user": "username",
     "password": "password",
     "server": "imap.broadband.rogers.com",
-    "folder": "logstash_input"
+    "folder": "logstash_input",
+    "subject_glob": "*",
+    "check_return_unread_only": false
   }
 }

@@ -3,7 +3,7 @@
 import os
 import sys
 import json
-import time
+from email.header import decode_header
 from imapclient import IMAPClient
 from email import policy
 from email.parser import BytesParser
@@ -27,14 +27,28 @@ def get_body(msg):
         if msg.is_multipart():
             return get_body(msg.get_payload(0))
         else:
-            return msg.get_payload()
+            return msg.get_payload(decode=True)
     else:
         return ""
+
+def get_subject(msg):
+    if msg['Subject']:
+        decoded_header = decode_header(msg['Subject'])
+        subject = ''.join([text.decode(encoding or 'utf8') for text, encoding in decoded_header])
+        return subject
+    else:
+        return ""
+
+def get_sender(msg):
+    return msg['From'] if msg['From'] else ""
 
 def write_to_file(email_message, destination, email_body_only):
     with open(os.path.join(destination, "email.txt"), "w") as f:
         if email_body_only:
-            f.write(get_body(email_message))
+            body = get_body(email_message)
+            if isinstance(body, bytes):
+                body = body.decode('utf-8', 'ignore')  # decoding from bytes to string
+            f.write(body)
         else:
             f.write(str(email_message))
 
